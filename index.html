@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Vua Tài Xỉu</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+html,body{width:100%;height:100%}
+
+body{
+    background:url("background.jpg") center/cover no-repeat fixed;
+    color:#fff;
+}
+
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    z-index:0;
+}
+
+.login{
+    position:fixed;inset:0;
+    display:flex;justify-content:center;align-items:center;
+    background:rgba(0,0,0,.8);
+    z-index:20;
+}
+.login-box{
+    background:#5a3e2b;
+    padding:25px;
+    border-radius:15px;
+    text-align:center;
+}
+.login-box input{margin:8px;padding:8px}
+
+.container{
+    display:none;
+    padding:20px;
+    text-align:center;
+    position:relative;
+    z-index:1;
+}
+
+.user img{width:90px;border-radius:50%}
+
+.dice-box{
+    display:flex;
+    justify-content:center;
+    gap:30px;
+    margin:70px 0;
+}
+.dice{
+    width:140px;height:140px;
+    background:#fff;color:#000;
+    font-size:55px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:15px;
+}
+
+button{
+    padding:10px 18px;margin:5px;
+    border:none;border-radius:8px;cursor:pointer
+}
+.tai,.xiu{font-size:20px;padding:14px 35px}
+.tai{background:green}
+.xiu{background:red}
+
+.history{
+    max-height:90px;
+    overflow:auto;
+    background:rgba(0,0,0,.7);
+    color:#00ffcc;
+    padding:8px;
+    border-radius:8px;
+    font-size:17px;
+}
+
+.popup{
+    position:fixed;inset:0;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    backdrop-filter:blur(6px);
+    background:rgba(0,0,0,.6);
+    z-index:30;
+}
+.box{
+    background:#5a3e2b;
+    padding:20px;
+    border-radius:12px;
+}
+
+.win-popup{
+    position:fixed;
+    inset:0;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:50;
+}
+.win-box{
+    padding:30px;
+    border-radius:15px;
+    font-size:26px;
+    font-weight:bold;
+    animation:zoom .3s;
+}
+.win{
+    background:lime;
+    color:black;
+}
+.lose{
+    background:red;
+    color:white;
+}
+
+@keyframes zoom{
+    from{transform:scale(.6);opacity:0}
+    to{transform:scale(1);opacity:1}
+}
+</style>
+</head>
+
+<body>
+
+<div class="login" id="login">
+  <div class="login-box">
+    <h2>👑 VUA TÀI XỈU</h2>
+    <input id="user" placeholder="Tài khoản"><br>
+    <input id="pass" type="password" placeholder="Mật khẩu"><br>
+    <button onclick="login()">Đăng nhập</button>
+  </div>
+</div>
+
+<div class="container" id="game">
+
+<div class="user">
+    <img src="avatar.png">
+    <div>💰 <span id="money">1000</span></div>
+    <button onclick="openNap()">Nạp</button>
+</div>
+
+<div class="dice-box">
+    <div id="d1" class="dice">?</div>
+    <div id="d2" class="dice">?</div>
+</div>
+
+<h3>Cược: <span id="bet">0</span></h3>
+
+<button onclick="addBet(50)">+50</button>
+<button onclick="addBet(100)">+100</button>
+<button onclick="addBet(200)">+200</button>
+<button onclick="addBet(500)">+500</button>
+<button onclick="resetBet()">Hủy</button>
+
+<br>
+
+<button class="tai" onclick="play('tai')">Tài</button>
+<button class="xiu" onclick="play('xiu')">Xỉu</button>
+
+<div id="result" style="margin:10px;font-size:22px"></div>
+<div id="history" class="history"></div>
+
+</div>
+
+<div id="popup" class="popup">
+  <div class="box">
+    <h3>Nạp tiền</h3>
+    <div id="napText">0</div>
+
+    <button onclick="addNap(50)">+50</button>
+    <button onclick="addNap(100)">+100</button>
+    <button onclick="addNap(200)">+200</button>
+    <button onclick="addNap(500)">+500</button>
+
+    <br><br>
+    <button onclick="confirmNap()">OK</button>
+    <button onclick="resetNap()">Hủy</button>
+    <button onclick="closeNap()">Đóng</button>
+  </div>
+</div>
+<div id="winPopup" class="win-popup">
+  <div id="winText" class="win-box"></div>
+</div>
+
+<script>
+let money=1000, bet=0, nap=0, roll;
+const $=id=>document.getElementById(id);
+
+function login(){
+    if($("user").value==="admin" && $("pass").value==="123"){
+        $("login").style.display="none";
+        $("game").style.display="block";
+    }else alert("Sai!");
+}
+
+const update=()=>{
+    $("bet").innerText=bet;
+    $("money").innerText=money;
+}
+
+const addBet=x=>{bet+=x;update()}
+const resetBet=()=>{bet=0;update()}
+
+function openNap(){ $("popup").style.display="flex"; }
+function closeNap(){ $("popup").style.display="none"; }
+
+const addNap=x=>{nap+=x;$("napText").innerText=nap}
+const resetNap=()=>{nap=0;$("napText").innerText=0}
+const confirmNap=()=>{money+=nap;resetNap();closeNap();update()}
+
+function play(choice){
+    if(bet<=0) return alert("Chưa cược");
+    if(bet>money) return alert("Không đủ");
+
+    roll=setInterval(()=>{
+        $("d1").innerText=Math.ceil(Math.random()*6);
+        $("d2").innerText=Math.ceil(Math.random()*6);
+    },100);
+
+    setTimeout(()=>{
+        clearInterval(roll);
+
+        let a=Math.ceil(Math.random()*6);
+        let b=Math.ceil(Math.random()*6);
+
+        $("d1").innerText=a;
+        $("d2").innerText=b;
+
+        let sum=a+b;
+        let resultType=sum>=7?"TÀI":"XỈU";
+        let win=(sum>=7?"tai":"xiu")===choice;
+
+        let change=win?Math.floor(bet*0.85):-bet;
+        money+=change;
+        update();
+
+        $("result").innerText=resultType+" | "+(change>0?"+":"")+change;
+
+        $("history").innerHTML=
+            `<div>${resultType} | ${sum} | ${change>0?"+":""}${change}</div>`+
+            $("history").innerHTML;
+
+        let popup=$("winPopup");
+        let box=$("winText");
+
+        box.className="win-box "+(win?"win":"lose");
+        box.innerText=resultType+" "+(change>0?"+":"")+change;
+
+        popup.style.display="flex";
+        setTimeout(()=>popup.style.display="none",1800);
+
+        bet=0;update();
+
+    },1200);
+}
+</script>
+
+</body>
+</html>
