@@ -9,16 +9,10 @@
 html,body{width:100%;height:100%}
 
 body{
-    background:url("background.jpg") center/cover no-repeat fixed;
+    background:
+        linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)),
+        url("background.jpg") center/cover no-repeat fixed;
     color:#fff;
-}
-
-body::before{
-    content:"";
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.5);
-    z-index:0;
 }
 
 .login{
@@ -39,8 +33,6 @@ body::before{
     display:none;
     padding:20px;
     text-align:center;
-    position:relative;
-    z-index:1;
 }
 
 .user img{width:90px;border-radius:50%}
@@ -51,6 +43,7 @@ body::before{
     gap:30px;
     margin:70px 0;
 }
+
 .dice{
     width:140px;height:140px;
     background:#fff;color:#000;
@@ -59,11 +52,20 @@ body::before{
     border-radius:15px;
 }
 
+/* ✨ thêm hiệu ứng lắc */
+@keyframes shake{
+0%{transform:rotate(0)}
+25%{transform:rotate(10deg)}
+50%{transform:rotate(-10deg)}
+75%{transform:rotate(10deg)}
+100%{transform:rotate(0)}
+}
+.shake{animation:shake 0.3s infinite;}
+
 button{
     padding:10px 18px;margin:5px;
     border:none;border-radius:8px;cursor:pointer
 }
-.tai,.xiu{font-size:20px;padding:14px 35px}
 .tai{background:green}
 .xiu{background:red}
 
@@ -74,77 +76,67 @@ button{
     color:#00ffcc;
     padding:8px;
     border-radius:8px;
-    font-size:17px;
 }
 
-.popup{
+/* BLACKJACK */
+#bj-dealer img,#bj-player img{
+    width:60px;margin:5px;border-radius:6px;
+    box-shadow:0 0 10px #000;
+    animation:deal .3s;
+}
+@keyframes deal{
+from{transform:translateY(-30px) scale(.5);opacity:0}
+to{transform:translateY(0) scale(1);opacity:1}
+}
+
+.popup,.win-popup{
     position:fixed;inset:0;
-    display:none;
-    justify-content:center;
-    align-items:center;
-    backdrop-filter:blur(6px);
-    background:rgba(0,0,0,.6);
-    z-index:30;
-}
-.box{
-    background:#5a3e2b;
-    padding:20px;
-    border-radius:12px;
+    display:none;justify-content:center;align-items:center;
 }
 
-.win-popup{
-    position:fixed;
-    inset:0;
-    display:none;
-    justify-content:center;
-    align-items:center;
-    z-index:50;
-}
 .win-box{
-    padding:30px;
-    border-radius:15px;
-    font-size:26px;
-    font-weight:bold;
-    animation:zoom .3s;
+    padding:30px;border-radius:15px;font-size:26px;font-weight:bold;
 }
-.win{
-    background:lime;
-    color:black;
-}
-.lose{
-    background:red;
-    color:white;
-}
-
-@keyframes zoom{
-    from{transform:scale(.6);opacity:0}
-    to{transform:scale(1);opacity:1}
-}
+.win{background:lime;color:black}
+.lose{background:red;color:white}
 </style>
 </head>
 
 <body>
 
+<audio id="bg-music" autoplay loop>
+<source src="music.mp3">
+</audio>
+
+<!-- 🔊 thêm âm thanh -->
+<audio id="win-sound"><source src="win.mp3"></audio>
+<audio id="lose-sound"><source src="lose.mp3"></audio>
+
 <div class="login" id="login">
-  <div class="login-box">
-    <h2>👑 VUA TÀI XỈU</h2>
-    <input id="user" placeholder="Tài khoản"><br>
-    <input id="pass" type="password" placeholder="Mật khẩu"><br>
-    <button onclick="login()">Đăng nhập</button>
-  </div>
+<div class="login-box">
+<h2>👑 VUA TÀI XỈU</h2>
+<input id="user"><br>
+<input id="pass" type="password"><br>
+<button onclick="login()">Đăng nhập</button>
+</div>
 </div>
 
 <div class="container" id="game">
 
 <div class="user">
-    <img src="avatar.png">
-    <div>💰 <span id="money">1000</span></div>
-    <button onclick="openNap()">Nạp</button>
+<img src="avatar.png">
+<div>💰 <span id="money">1000</span></div>
+<button onclick="openNap()">Nạp</button>
 </div>
 
+<button onclick="showGame('tx')">🎲 Tài Xỉu</button>
+<button onclick="showGame('bj')">🃏 Blackjack</button>
+
+<div id="tx">
+
 <div class="dice-box">
-    <div id="d1" class="dice">?</div>
-    <div id="d2" class="dice">?</div>
+<div id="d1" class="dice">?</div>
+<div id="d2" class="dice">?</div>
 </div>
 
 <h3>Cược: <span id="bet">0</span></h3>
@@ -160,101 +152,274 @@ button{
 <button class="tai" onclick="play('tai')">Tài</button>
 <button class="xiu" onclick="play('xiu')">Xỉu</button>
 
-<div id="result" style="margin:10px;font-size:22px"></div>
+<div id="result"></div>
 <div id="history" class="history"></div>
 
 </div>
 
-<div id="popup" class="popup">
-  <div class="box">
-    <h3>Nạp tiền</h3>
-    <div id="napText">0</div>
+<div id="bj" style="display:none">
 
-    <button onclick="addNap(50)">+50</button>
-    <button onclick="addNap(100)">+100</button>
-    <button onclick="addNap(200)">+200</button>
-    <button onclick="addNap(500)">+500</button>
+<h3>Cược BJ: <span id="bj-bet">0</span></h3>
 
-    <br><br>
-    <button onclick="confirmNap()">OK</button>
-    <button onclick="resetNap()">Hủy</button>
-    <button onclick="closeNap()">Đóng</button>
-  </div>
+<button onclick="bjAdd(50)">+50</button>
+<button onclick="bjAdd(100)">+100</button>
+<button onclick="bjAdd(200)">+200</button>
+<button onclick="bjAdd(500)">+500</button>
+<button onclick="bjReset()">Hủy</button>
+
+<div>
+<h3>Nhà cái</h3>
+<div id="bj-dealer"></div>
+<p id="bj-d"></p>
 </div>
+
+<div>
+<h3>Người chơi</h3>
+<div id="bj-player"></div>
+<p id="bj-p"></p>
+</div>
+
+<button onclick="bjStart()">Chia</button>
+<button onclick="bjHit()">Rút</button>
+<button onclick="bjStand()">Dừng</button>
+
+<div id="bj-result"></div>
+<div id="bj-history" class="history"></div>
+
+</div>
+
+</div>
+
+<div id="popup" class="popup">
+<div class="box">
+<h3>Nạp tiền</h3>
+<div id="napText">0</div>
+<button onclick="addNap(50)">+50</button>
+<button onclick="addNap(100)">+100</button>
+<button onclick="addNap(200)">+200</button>
+<button onclick="addNap(500)">+500</button>
+<br><br>
+<button onclick="confirmNap()">OK</button>
+<button onclick="resetNap()">Hủy</button>
+<button onclick="closeNap()">Đóng</button>
+</div>
+</div>
+
 <div id="winPopup" class="win-popup">
-  <div id="winText" class="win-box"></div>
+<div id="winText" class="win-box"></div>
 </div>
 
 <script>
 let money=1000, bet=0, nap=0, roll;
 const $=id=>document.getElementById(id);
 
+function save(){
+localStorage.setItem("money",money);
+localStorage.setItem("bet",bet);
+}
+window.onload=()=>{
+let m=localStorage.getItem("money");
+let b=localStorage.getItem("bet");
+if(m) money=parseInt(m);
+if(b) bet=parseInt(b);
+update();
+}
+
+document.addEventListener("click",()=>{$("bg-music").play();});
+
 function login(){
-    if($("user").value==="admin" && $("pass").value==="123"){
-        $("login").style.display="none";
-        $("game").style.display="block";
-    }else alert("Sai!");
+if($("user").value==="admin"&&$("pass").value==="123"){
+$("login").style.display="none";
+$("game").style.display="block";
+}
 }
 
 const update=()=>{
-    $("bet").innerText=bet;
-    $("money").innerText=money;
+$("bet").innerText=bet;
+$("money").innerText=money;
+save();
 }
 
 const addBet=x=>{bet+=x;update()}
 const resetBet=()=>{bet=0;update()}
 
-function openNap(){ $("popup").style.display="flex"; }
-function closeNap(){ $("popup").style.display="none"; }
-
+function openNap(){$("popup").style.display="flex";}
+function closeNap(){$("popup").style.display="none";}
 const addNap=x=>{nap+=x;$("napText").innerText=nap}
 const resetNap=()=>{nap=0;$("napText").innerText=0}
 const confirmNap=()=>{money+=nap;resetNap();closeNap();update()}
 
+function showGame(g){
+$("tx").style.display=g==="tx"?"block":"none";
+$("bj").style.display=g==="bj"?"block":"none";
+}
+
 function play(choice){
-    if(bet<=0) return alert("Chưa cược");
-    if(bet>money) return alert("Không đủ");
+if(bet<=0) return alert("Chưa cược");
+if(bet>money) return alert("Không đủ");
 
-    roll=setInterval(()=>{
-        $("d1").innerText=Math.ceil(Math.random()*6);
-        $("d2").innerText=Math.ceil(Math.random()*6);
-    },100);
+roll=setInterval(()=>{
+$("d1").classList.add("shake");
+$("d2").classList.add("shake");
+$("d1").innerText=Math.ceil(Math.random()*6);
+$("d2").innerText=Math.ceil(Math.random()*6);
+},100);
 
-    setTimeout(()=>{
-        clearInterval(roll);
+setTimeout(()=>{
+clearInterval(roll);
+$("d1").classList.remove("shake");
+$("d2").classList.remove("shake");
 
-        let a=Math.ceil(Math.random()*6);
-        let b=Math.ceil(Math.random()*6);
+let a=Math.ceil(Math.random()*6);
+let b=Math.ceil(Math.random()*6);
 
-        $("d1").innerText=a;
-        $("d2").innerText=b;
+$("d1").innerText=a;
+$("d2").innerText=b;
 
-        let sum=a+b;
-        let resultType=sum>=7?"TÀI":"XỈU";
-        let win=(sum>=7?"tai":"xiu")===choice;
+let sum=a+b;
+let resultType=sum>=7?"TÀI":"XỈU";
+let win=(sum>=7?"tai":"xiu")===choice;
 
-        let change=win?Math.floor(bet*0.85):-bet;
-        money+=change;
-        update();
+let change=win?Math.floor(bet*0.85):-bet;
+money+=change;
+update();
 
-        $("result").innerText=resultType+" | "+(change>0?"+":"")+change;
+// 🔥 giới hạn lịch sử
+let h=$("history").innerHTML.split("</div>");
+if(h.length>15) h.pop();
 
-        $("history").innerHTML=
-            `<div>${resultType} | ${sum} | ${change>0?"+":""}${change}</div>`+
-            $("history").innerHTML;
+$("history").innerHTML=
+`<div>${resultType} | ${sum} | ${change>0?"+":""}${change}</div>`+
+h.join("</div>");
 
-        let popup=$("winPopup");
-        let box=$("winText");
+showPopup(change);
 
-        box.className="win-box "+(win?"win":"lose");
-        box.innerText=resultType+" "+(change>0?"+":"")+change;
+// 🔊 âm thanh
+if(change>0){$("win-sound").play();}
+else{$("lose-sound").play();}
 
-        popup.style.display="flex";
-        setTimeout(()=>popup.style.display="none",1800);
+bet=0;update();
 
-        bet=0;update();
+},1200);
+}
 
-    },1200);
+// ===== BLACKJACK =====
+let p=[],d=[],deck=[],playBJ=false,hide=true,bjBet=0;
+
+function bjAdd(x){bjBet+=x;$("bj-bet").innerText=bjBet;}
+function bjReset(){bjBet=0;$("bj-bet").innerText=0;}
+
+function create(){
+let s=["H","D","C","S"],v=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+deck=[];
+for(let i of s)for(let j of v)deck.push({v:j,s:i});
+deck.sort(()=>Math.random()-0.5);
+}
+
+function img(c){return `https://deckofcardsapi.com/static/img/${c.v}${c.s}.png`}
+const back="https://deckofcardsapi.com/static/img/back.png";
+
+function score(h){
+let s=0,a=0;
+for(let c of h){
+if(c.v==="A"){s+=11;a++}
+else if(["K","Q","J"].includes(c.v)) s+=10;
+else s+=+c.v;
+}
+while(s>21&&a>0){s-=10;a--}
+return s;
+}
+
+function render(){
+$("bj-player").innerHTML="";
+$("bj-dealer").innerHTML="";
+
+p.forEach(c=>{
+let i=document.createElement("img");
+i.src=img(c);
+$("bj-player").appendChild(i);
+});
+
+d.forEach((c,i)=>{
+let el=document.createElement("img");
+el.src=(hide&&i==0)?back:img(c);
+$("bj-dealer").appendChild(el);
+});
+
+$("bj-p").innerText="Điểm: "+score(p);
+$("bj-d").innerText=hide?"?":"Điểm: "+score(d);
+}
+
+function deal(t){
+return new Promise(r=>{
+setTimeout(()=>{t.push(deck.pop());render();r();},200);
+});
+}
+
+async function bjStart(){
+if(bjBet<=0) return alert("Chưa cược");
+if(bjBet>money) return alert("Không đủ");
+
+create();
+p=[];d=[];
+hide=true;
+playBJ=true;
+
+await deal(p);await deal(d);
+await deal(p);await deal(d);
+}
+
+function bjResult(change){
+money+=change;
+update();
+
+$("bj-result").innerText=(change>0?"+":"")+change;
+
+$("bj-history").innerHTML=
+`<div>${change>0?"+":""}${change}</div>`+
+$("bj-history").innerHTML;
+
+// 🔊 âm thanh
+if(change>0){$("win-sound").play();}
+else{$("lose-sound").play();}
+
+showPopup(change);
+}
+
+async function bjHit(){
+if(!playBJ) return;
+await deal(p);
+
+if(score(p)>21){
+hide=false;render();
+bjResult(-bjBet);
+bjReset();
+playBJ=false;
+}
+}
+
+async function bjStand(){
+if(!playBJ) return;
+
+hide=false;render();
+
+while(score(d)<17) await deal(d);
+
+let win=(score(d)>21||score(p)>score(d));
+let change=win?Math.floor(bjBet*0.85):-bjBet;
+
+bjResult(change);
+bjReset();
+playBJ=false;
+}
+
+function showPopup(change){
+let box=$("winText");
+box.className="win-box "+(change>0?"win":"lose");
+box.innerText=(change>0?"+":"")+change;
+
+$("winPopup").style.display="flex";
+setTimeout(()=>$("winPopup").style.display="none",1500);
 }
 </script>
 
